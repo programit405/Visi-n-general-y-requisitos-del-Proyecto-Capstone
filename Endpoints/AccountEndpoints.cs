@@ -3,6 +3,7 @@ using System.Net;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using security_and_authentication.Helpers;
 
 public static class AccountEndpoints
 {
@@ -61,6 +62,13 @@ public static class AccountEndpoints
             {
                 var errors = validationResults.Select(e => e.ErrorMessage);
                 return Results.BadRequest(errors);
+            }
+
+            // Validate input for SQL injection and XSS
+            var validation = InputValidationHelper.ValidateRegistrationInput(model.Email, model.Password);
+            if (!validation.IsValid)
+            {
+                return Results.BadRequest(new { errors = validation.Errors });
             }
 
             // Create a new user and save to the database
@@ -154,7 +162,7 @@ public static class AccountEndpoints
                 return Results.NotFound("User not found.");
             }
 
-            var result = await userManager.AddClaimAsync(user, new Claim(model.ClaimName,model.ClaimValue));
+            var result = await userManager.AddClaimAsync(user, new Claim(model.ClaimName, model.ClaimValue));
 
             if (!result.Succeeded)
             {
@@ -181,7 +189,7 @@ public static class AccountEndpoints
                 return Results.NotFound("Role not found.");
             }
 
-            var result = await roleManager.AddClaimAsync(role, new Claim(model.ClaimName,model.ClaimValue));
+            var result = await roleManager.AddClaimAsync(role, new Claim(model.ClaimName, model.ClaimValue));
 
             if (!result.Succeeded)
             {
@@ -218,6 +226,15 @@ public static class AccountEndpoints
                                 SignInManager<IdentityUser> signInManager,
                                 UserManager<IdentityUser> userManager) =>
             {
+
+                // Validate input for SQL injection and XSS
+                var validation = InputValidationHelper.ValidateLoginInput(model.Email, model.Password);
+                if (!validation.IsValid)
+                {
+                    return Results.BadRequest(new { errors = validation.Errors });
+                }
+
+
                 var user = await userManager.FindByEmailAsync(model.Email);
                 if (user == null)
                     return Results.BadRequest("Invalid login attempt.");
@@ -231,11 +248,11 @@ public static class AccountEndpoints
 
         app.MapPost("/api/logout", async (SignInManager<IdentityUser> signInManager) =>
             {
-             
+
                 await signInManager.SignOutAsync();
 
                 return Results.Ok("Log out successfully.");
-            });    
+            });
     }
 
 
