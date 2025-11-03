@@ -696,5 +696,3 @@ Here's what we covered in this article. We began by introducing ASP.NET Identity
 
 
 
-### Contact:
-Created by [@shohangithub](https://github.com/shohangithub) – feel free to connect!
